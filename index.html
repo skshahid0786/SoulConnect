@@ -204,6 +204,51 @@
             messageElement.textContent = `${message.user}: ${message.text}`;
             document.getElementById("messages").appendChild(messageElement);
         });
+        // Sign Up Logic with Auto Welcome Message
+document.getElementById("signup-button").addEventListener("click", () => {
+    const username = usernameInput.value.trim();
+    const mobile = mobileInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !mobile || !password) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    // Check if user already exists
+    const userRef = ref(db, `users/${mobile}`);
+    get(userRef).then(snapshot => {
+        if (snapshot.exists()) {
+            alert("This mobile number is already registered. Please log in.");
+        } else {
+            // Create user with Firebase Authentication
+            createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
+                .then((userCredential) => {
+                    // Store the user profile
+                    set(ref(db, `users/${mobile}/profile`), {
+                        username: username,
+                        mobile: mobile
+                    }).then(() => {
+                        alert("Sign Up successful!");
+
+                        // Send a welcome message from "Admin"
+                        const welcomeMessage = {
+                            text: `Welcome, ${username}! 🎉 Enjoy chatting on SoulConnect!`,
+                            user: "Admin",
+                            timestamp: Date.now()
+                        };
+                        push(messagesRef, welcomeMessage);
+                    }).catch((error) => {
+                        console.error("Error storing user profile:", error);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error signing up:", error);
+                });
+        }
+    });
+});
+            
     </script>
 
 </body>
