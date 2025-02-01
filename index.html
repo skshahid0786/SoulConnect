@@ -142,14 +142,13 @@
                     }
                 });
                 document.getElementById('login-signup-container').style.display = 'none';
-                document.getElementById("send-button").style.display = 'block';
             } else {
                 document.getElementById('login-signup-container').style.display = 'block';
-                document.getElementById("send-button").style.display = 'none';
                 document.getElementById("welcome-message").textContent = "Welcome to SoulConnect";
             }
         });
 
+        // Signup with auto welcome message
         document.getElementById("signup-button").addEventListener("click", () => {
             const username = document.getElementById("username-input").value.trim();
             const mobile = document.getElementById("mobile-input").value.trim();
@@ -160,31 +159,32 @@
                 return;
             }
 
-            createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
-                .then(() => {
-                    set(ref(db, `users/${mobile}/profile`), { username, mobile });
-                    alert("Sign Up successful!");
-                })
-                .catch(error => console.error("Error signing up:", error));
+            const userRef = ref(db, `users/${mobile}`);
+            get(userRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    alert("This mobile number is already registered. Please log in.");
+                } else {
+                    createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
+                        .then(() => {
+                            set(ref(db, `users/${mobile}/profile`), { username, mobile })
+                                .then(() => {
+                                    alert("Sign Up successful!");
+
+                                    // Send welcome message from Admin
+                                    push(ref(db, 'messages'), {
+                                        text: `Welcome, ${username}! 🎉 Enjoy chatting on SoulConnect!`,
+                                        user: "Admin",
+                                        timestamp: Date.now()
+                                    });
+                                })
+                                .catch(error => console.error("Error storing user profile:", error));
+                        })
+                        .catch(error => console.error("Error signing up:", error));
+                }
+            });
         });
 
-        document.getElementById("login-button").addEventListener("click", () => {
-            const mobile = document.getElementById("mobile-input").value.trim();
-            const password = document.getElementById("password-input").value.trim();
-
-            signInWithEmailAndPassword(auth, `${mobile}@example.com`, password)
-                .then((userCredential) => {
-                    const userMobile = userCredential.user.email.split('@')[0];
-                    get(ref(db, `users/${userMobile}/profile`)).then(snapshot => {
-                        if (snapshot.exists()) {
-                            currentUsername = snapshot.val().username;
-                            alert(`Welcome back, ${currentUsername}!`);
-                        }
-                    });
-                })
-                .catch(error => console.error("Error logging in:", error));
-        });
-
+        // Send chat message
         document.getElementById("send-button").addEventListener("click", () => {
             const messageText = document.getElementById("message-input").value.trim();
             if (messageText) {
@@ -197,6 +197,7 @@
             }
         });
 
+        // Load messages from Firebase
         onChildAdded(ref(db, 'messages'), (data) => {
             const message = data.val();
             const messageElement = document.createElement("div");
@@ -204,51 +205,7 @@
             messageElement.textContent = `${message.user}: ${message.text}`;
             document.getElementById("messages").appendChild(messageElement);
         });
-        // Sign Up Logic with Auto Welcome Message
-document.getElementById("signup-button").addEventListener("click", () => {
-    const username = usernameInput.value.trim();
-    const mobile = mobileInput.value.trim();
-    const password = passwordInput.value.trim();
 
-    if (!username || !mobile || !password) {
-        alert("Please fill in all fields.");
-        return;
-    }
-
-    // Check if user already exists
-    const userRef = ref(db, `users/${mobile}`);
-    get(userRef).then(snapshot => {
-        if (snapshot.exists()) {
-            alert("This mobile number is already registered. Please log in.");
-        } else {
-            // Create user with Firebase Authentication
-            createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
-                .then((userCredential) => {
-                    // Store the user profile
-                    set(ref(db, `users/${mobile}/profile`), {
-                        username: username,
-                        mobile: mobile
-                    }).then(() => {
-                        alert("Sign Up successful!");
-
-                        // Send a welcome message from "Admin"
-                        const welcomeMessage = {
-                            text: `Welcome, ${username}! 🎉 Enjoy chatting on SoulConnect!`,
-                            user: "Admin",
-                            timestamp: Date.now()
-                        };
-                        push(messagesRef, welcomeMessage);
-                    }).catch((error) => {
-                        console.error("Error storing user profile:", error);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error signing up:", error);
-                });
-        }
-    });
-});
-            
     </script>
 
 </body>
