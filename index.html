@@ -1,25 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="08f30c5ee2fb49cbf9fa501a5370da3c131ce36d" content="08f30c5ee2fb49cbf9fa501a5370da3c131ce36d" />
-     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-         <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#2b5797">
-    <meta name="theme-color" content="#ffffff">
-     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoulConnect</title>
+    <title>SoulConnect Chat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #121212; /* Dark background for high-tech look */
+            background-color: #121212;
             color: white;
         }
         #chat-container {
@@ -30,7 +20,7 @@
             border-radius: 10px;
             padding: 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            border: 2px solid #e50914; /* Red border */
+            border: 2px solid #e50914;
         }
         #messages {
             max-height: 350px;
@@ -46,13 +36,13 @@
             font-size: 16px;
         }
         .user {
-            background-color: #e50914; /* Red for user messages */
+            background-color: #e50914;
             color: white;
             text-align: right;
         }
         .bot {
-            background-color: #333; /* Dark gray for bot messages */
-            color: #e50914; /* Red for bot text */
+            background-color: #333;
+            color: #e50914;
         }
         #message-input {
             width: 80%;
@@ -97,14 +87,10 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #login-button:disabled, #signup-button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
         #welcome-message {
             font-size: 24px;
             text-align: center;
-            color: #e50914; /* Red for welcome message */
+            color: #e50914;
             margin-bottom: 20px;
         }
     </style>
@@ -112,9 +98,7 @@
 <body>
 
     <div id="chat-container">
-        <h2 id="welcome-message">Welcome to the Chat</h2>
-
-        <!-- Login/Signup Section -->
+        <h2 id="welcome-message">Welcome to SoulConnect</h2>
         <div id="login-signup-container">
             <input type="text" id="username-input" placeholder="Enter your username" />
             <input type="text" id="mobile-input" placeholder="Enter your mobile number" />
@@ -122,20 +106,16 @@
             <button id="signup-button">Sign Up</button>
             <button id="login-button">Login</button>
         </div>
-
-        <!-- Chat Messages -->
         <div id="messages"></div>
         <input type="text" id="message-input" placeholder="Type a message..." />
         <button id="send-button">Send</button>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import { getDatabase, ref, set, get, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBodQ2A0G8I3HFCwSI8zikD29N2zQHYtKk",
             authDomain: "chattingweb-564e8.firebaseapp.com",
@@ -146,143 +126,83 @@
             appId: "1:729235245293:web:b3d55f7a332197693124e4"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // DOM Elements
-        const usernameInput = document.getElementById("username-input");
-        const mobileInput = document.getElementById("mobile-input");
-        const passwordInput = document.getElementById("password-input");
-        const sendButton = document.getElementById("send-button");
-        const messageInput = document.getElementById("message-input");
-        const messagesDiv = document.getElementById("messages");
-        const welcomeMessage = document.getElementById("welcome-message");
+        let currentUsername = "";
 
-        // Firebase Refs
-        const messagesRef = ref(db, 'messages');
-        const usersRef = ref(db, 'users');
-
-        // Listen to Firebase Authentication State (Detect login persistence)
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // If user is logged in, display welcome message
-                const userMobile = user.email.split('@')[0]; // Using mobile as email
+                const userMobile = user.email.split('@')[0];
                 get(ref(db, `users/${userMobile}/profile`)).then(snapshot => {
                     if (snapshot.exists()) {
-                        const userProfile = snapshot.val();
-                        welcomeMessage.textContent = `Welcome back, ${userProfile.username}!`;
+                        currentUsername = snapshot.val().username;
+                        document.getElementById("welcome-message").textContent = `Welcome, ${currentUsername}!`;
                     }
                 });
-
-                // Enable chat features
                 document.getElementById('login-signup-container').style.display = 'none';
-                sendButton.style.display = 'block';
+                document.getElementById("send-button").style.display = 'block';
             } else {
-                // Show login/signup options
                 document.getElementById('login-signup-container').style.display = 'block';
-                sendButton.style.display = 'none';
-                welcomeMessage.textContent = "Welcome to the Chat";
+                document.getElementById("send-button").style.display = 'none';
+                document.getElementById("welcome-message").textContent = "Welcome to SoulConnect";
             }
         });
 
-        // Sign Up Logic
         document.getElementById("signup-button").addEventListener("click", () => {
-            const username = usernameInput.value.trim();
-            const mobile = mobileInput.value.trim();
-            const password = passwordInput.value.trim();
+            const username = document.getElementById("username-input").value.trim();
+            const mobile = document.getElementById("mobile-input").value.trim();
+            const password = document.getElementById("password-input").value.trim();
 
             if (!username || !mobile || !password) {
                 alert("Please fill in all fields.");
                 return;
             }
 
-            // Check if user already exists
-            const userRef = ref(db, `users/${mobile}`);
-            get(userRef).then(snapshot => {
-                if (snapshot.exists()) {
-                    alert("This mobile number is already registered. Please log in.");
-                } else {
-                    // Create user with Firebase Authentication
-                    createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
-                        .then((userCredential) => {
-                            // Store the username, mobile, and password (in real-world, avoid storing plain password)
-                            set(ref(db, `users/${mobile}/profile`), {
-                                username: username,
-                                mobile: mobile
-                            }).then(() => {
-                                alert("Sign Up successful!");
-                            }).catch((error) => {
-                                console.error("Error storing user profile:", error);
-                            });
-                        })
-                        .catch((error) => {
-                            console.error("Error signing up:", error);
-                        });
-                }
-            });
+            createUserWithEmailAndPassword(auth, `${mobile}@example.com`, password)
+                .then(() => {
+                    set(ref(db, `users/${mobile}/profile`), { username, mobile });
+                    alert("Sign Up successful!");
+                })
+                .catch(error => console.error("Error signing up:", error));
         });
 
-        // Login Logic
         document.getElementById("login-button").addEventListener("click", () => {
-            const mobile = mobileInput.value.trim();
-            const password = passwordInput.value.trim();
+            const mobile = document.getElementById("mobile-input").value.trim();
+            const password = document.getElementById("password-input").value.trim();
 
-            if (!mobile || !password) {
-                alert("Please fill in both fields.");
-                return;
-            }
-
-            // Sign in with Firebase Authentication
             signInWithEmailAndPassword(auth, `${mobile}@example.com`, password)
                 .then((userCredential) => {
-                    const user = userCredential.user;
-                    console.log("Logged in as:", user.email);
-
-                    // Get user profile from Firebase Database
-                    get(ref(db, `users/${mobile}/profile`))
-                        .then(snapshot => {
-                            if (snapshot.exists()) {
-                                const userProfile = snapshot.val();
-                                alert(`Welcome back, ${userProfile.username}!`);
-                            } else {
-                                alert("User profile not found.");
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error fetching user profile:", error);
-                        });
+                    const userMobile = userCredential.user.email.split('@')[0];
+                    get(ref(db, `users/${userMobile}/profile`)).then(snapshot => {
+                        if (snapshot.exists()) {
+                            currentUsername = snapshot.val().username;
+                            alert(`Welcome back, ${currentUsername}!`);
+                        }
+                    });
                 })
-                .catch((error) => {
-                    console.error("Error logging in:", error);
-                    alert("Invalid credentials. Please try again.");
-                });
+                .catch(error => console.error("Error logging in:", error));
         });
 
-        // Send message to Firebase
-        sendButton.addEventListener("click", () => {
-            const messageText = messageInput.value.trim();
-
+        document.getElementById("send-button").addEventListener("click", () => {
+            const messageText = document.getElementById("message-input").value.trim();
             if (messageText) {
-                const message = {
+                push(ref(db, 'messages'), {
                     text: messageText,
-                    user: usernameInput.value.trim(),
+                    user: currentUsername || "Unknown",
                     timestamp: Date.now()
-                };
-                push(messagesRef, message);
-                messageInput.value = ""; // Clear message input field
+                });
+                document.getElementById("message-input").value = "";
             }
         });
 
-        // Listen for new messages
-        onChildAdded(messagesRef, (data) => {
+        onChildAdded(ref(db, 'messages'), (data) => {
             const message = data.val();
             const messageElement = document.createElement("div");
-            messageElement.classList.add(message.user === usernameInput.value.trim() ? "user" : "bot");
+            messageElement.classList.add(message.user === currentUsername ? "user" : "bot");
             messageElement.textContent = `${message.user}: ${message.text}`;
-            messagesDiv.appendChild(messageElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+            document.getElementById("messages").appendChild(messageElement);
         });
     </script>
 
